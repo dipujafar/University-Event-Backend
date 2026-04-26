@@ -4,8 +4,7 @@ export type QueryObject = {
 };
 
 export type TLogin = {
-  phoneNumber?: string;
-  email?: string;
+  email: string;
   password: string;
 };
 export type TChangePassword = {
@@ -20,5 +19,6 @@ export type TResetPassword = {
 
 export interface IJwtPayload {
   userId: string;
+  email: string;
   role: string;
 }

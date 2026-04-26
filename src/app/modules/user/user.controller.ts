@@ -15,14 +15,35 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
     });
   }
   const result = await userService.createUser(req.body);
-  const sendOtp = await otpServices.resendOtp(result?.email);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: 'User created successfully',
-    data: { user: result, otpToken: sendOtp },
+    data: result,
   });
 });
+
+//  -------------------------------- user registration for first time entry ---------------------
+const userRegister = catchAsync(async (req: Request, res: Response) => {
+  if (req.file) {
+    req.body.profile = await uploadToS3({
+      file: req.file,
+      fileName: `images/user/profile/${Math.floor(100000 + Math.random() * 900000)}`,
+    });
+  }
+  const email = req.body.email;
+  req.body.fistTimeRegistered = true;
+  const result = await userService.registerUser(email, req.body);
+  const sendOtp = await otpServices.resendOtp(result?.email);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User registered successfully and OTP sent successfully',
+    data: sendOtp,
+  });
+});
+
+// --------------------------------------------------------------------------------------------------------------
 
 const getAllUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.getAllUser(req.query);
@@ -120,4 +141,5 @@ export const userController = {
   updateMyProfile,
   deleteUser,
   deleteMYAccount,
+  userRegister,
 };

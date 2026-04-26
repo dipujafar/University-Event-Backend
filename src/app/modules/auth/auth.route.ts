@@ -1,22 +1,23 @@
 import { Router } from 'express';
 import { authControllers } from './auth.controller';
-import auth from '../../middleware/auth';
 import validateRequest from '../../middleware/validateRequest';
 import { authValidation } from './auth.validation';
 import { USER_ROLE } from '../user/user.constants';
+import auth from '../../middleware/auth';
 
 const router = Router();
-
-// router.post(
-//   '/google-login',
-//   validateRequest(authValidation.googleLogin),
-//   authControllers.googleLogin,
-// );
 
 router.post(
   '/login',
   validateRequest(authValidation.loginZodValidationSchema),
   authControllers.login,
+);
+
+router.post(
+  '/login/admin',
+
+  validateRequest(authValidation.loginAdminZodValidationSchema),
+  authControllers.loginAdmin,
 );
 
 router.post(
@@ -27,26 +28,26 @@ router.post(
 
 router.patch(
   '/change-password',
+  validateRequest(authValidation.changePasswordZodValidationSchema),
   auth(
     USER_ROLE.super_admin,
     USER_ROLE.sub_admin,
     USER_ROLE.admin,
     USER_ROLE.user,
+    USER_ROLE.staff,
   ),
   authControllers.changePassword,
 );
 
-router.patch('/forgot-password', authControllers.forgotPassword);
-router.patch('/reset-password', authControllers.resetPassword);
+router.patch(
+  '/forgot-password',
+  validateRequest(authValidation.forgotPasswordZodValidationSchema),
+  authControllers.forgotPassword,
+);
+router.patch(
+  '/reset-password',
+  validateRequest(authValidation.resetPasswordZodValidationSchema),
+  authControllers.resetPassword,
+);
 
-router.get('/reset-password-page', authControllers.resetPasswordLink);
-
-router.get('/password-reset-success', (req, res) => {
-  res.render('successMessage', {
-    hadeTitle: 'Password Reset Successful',
-    title: 'Password Reset Successful 🎉',
-    description:
-      'Your password has been updated securely. You can now log in with your new credentials.',
-  });
-});
 export const authRoutes = router;

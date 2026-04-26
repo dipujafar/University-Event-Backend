@@ -7,13 +7,27 @@ const guestValidationSchema = z.object({
     email: z
       .string({ required_error: 'Email is required' })
       .email({ message: 'Invalid email address' }),
-    phoneNumber: z.string({ required_error: 'Phone number is required' }),
-    location: z.string({ required_error: 'Location is required' }),
+    phoneNumber: z.string().optional(),
     role: z.enum([...Role] as [string, ...string[]]).default(USER_ROLE.user),
-    password: z.string({ required_error: 'Password is required' }),
+    seat: z.string({ required_error: 'Seat is required' }),
+    section: z.string().optional(),
+    profile: z.string().optional(),
+  }),
+});
+
+const userRegisterValidationSchema = z.object({
+  body: z.object({
+    name: z.string().optional(),
+    email: z
+      .string({ required_error: 'Email is required' })
+      .email({ message: 'Invalid email address' }),
+    phoneNumber: z.string({ required_error: 'Phone number is required' }),
+    section: z.string({ required_error: 'Section is required' }),
+    profile: z.string().optional(),
   }),
 });
 
 export const userValidation = {
   guestValidationSchema,
+  userRegisterValidationSchema,
 };

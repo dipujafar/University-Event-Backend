@@ -5,7 +5,6 @@ import AppError from '../../error/AppError';
 import { IUser } from './user.interface';
 import { User } from './user.models';
 import QueryBuilder from '../../class/builder/QueryBuilder';
-import { checkUserExit } from './user.utils';
 
 export type IFilter = {
   searchTerm?: string;
@@ -13,22 +12,13 @@ export type IFilter = {
   [key: string]: any;
 };
 const createUser = async (payload: IUser): Promise<IUser> => {
-  const exitUser = await checkUserExit(payload);
+  const isExist = await User.isUserExist(payload.email as string);
 
-  if (exitUser) {
-    return exitUser;
-  }
-
-  if (payload?.isGoogleLogin) {
-    payload.verification = {
-      otp: 0,
-      expiresAt: new Date(Date.now()),
-      status: true,
-    };
-  }
-
-  if (!payload.isGoogleLogin && !payload.password) {
-    throw new AppError(httpStatus.BAD_REQUEST, 'Password is required');
+  if (isExist) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'User already exists with this email',
+    );
   }
 
   const user = await User.create(payload);
@@ -37,6 +27,32 @@ const createUser = async (payload: IUser): Promise<IUser> => {
   }
   return user;
 };
+
+// ----------------------------------- user registration for first time entry ---------------------
+const registerUser = async (email: string, payload: Partial<IUser>) => {
+  const isExist = await User.isUserExist(payload.email as string);
+
+  if (!isExist) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'This email is not listed yet. Please contact with admin',
+    );
+  }
+
+  if (isExist?.isDeleted) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'This email user removed from list. Please contact with admin',
+    );
+  }
+
+  const user = await User.findOneAndUpdate({ email }, payload, { new: true });
+  if (!user) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User registration failed');
+  }
+  return user;
+};
+// -----------------------------------------------------------------------------------------------
 
 const getAllUser = async (query: Record<string, any>) => {
   const userModel = new QueryBuilder(User.find().select('-password'), query)
@@ -90,4 +106,5 @@ export const userService = {
   geUserById,
   updateUser,
   deleteUser,
+  registerUser,
 };

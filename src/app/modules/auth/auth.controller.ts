@@ -3,11 +3,25 @@ import { Request, Response } from 'express';
 import { authServices } from './auth.service';
 import sendResponse from '../../utils/sendResponse';
 import httpStatus from 'http-status';
+import { otpServices } from '../otp/otp.service';
 import config from '../../config';
 
 // login
 const login = catchAsync(async (req: Request, res: Response) => {
   const result = await authServices.login(req.body, req);
+  const sendOtp = await otpServices.resendOtp(result?.email);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'OTP sent your email successfully. Please verify your email',
+    data: sendOtp,
+  });
+});
+
+// ---------------------------------------- login admin or staff -----------------------------------------------
+const loginAdmin = catchAsync(async (req: Request, res: Response) => {
+  const result = await authServices.loginAdmin(req.body, req);
   const { refreshToken } = result;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cookieOptions: any = {
@@ -29,30 +43,6 @@ const login = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const googleLogin = catchAsync(async (req: Request, res: Response) => {
-//   const result = await authServices.googleLogin(req.body, req);
-//   const { refreshToken } = result;
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   const cookieOptions: any = {
-//     secure: false,
-//     httpOnly: true,
-//     maxAge: 31536000000,
-//   };
-
-//   if (config.NODE_ENV === 'production') {
-//     cookieOptions.sameSite = 'none';
-//   }
-//   res.cookie('refreshToken', refreshToken, cookieOptions);
-
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Logged in successfully',
-//     data: result,
-//   });
-// });
-
-// change password
 const changePassword = catchAsync(async (req: Request, res: Response) => {
   const result = await authServices.changePassword(req?.user?.userId, req.body);
   sendResponse(res, {
@@ -100,22 +90,11 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const resetPasswordLink = catchAsync(async (req: Request, res: Response) => {
-  const token = req.query.token;
-  const result = await authServices.resetPasswordLink(token as string);
-
-  res.render('resetPasswordPage', {
-    // resetUrl: `${config.server_url}/auth/reset-password`,
-    token,
-  });
-});
-
 export const authControllers = {
   login,
-  changePassword,
+  loginAdmin,
+  refreshToken,
   forgotPassword,
   resetPassword,
-  refreshToken,
-  // googleLogin,
-  resetPasswordLink,
+  changePassword,
 };

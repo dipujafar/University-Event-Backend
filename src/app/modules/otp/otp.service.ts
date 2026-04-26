@@ -9,6 +9,8 @@ import { User } from '../user/user.models';
 import { IUser } from '../user/user.interface';
 import fs from 'fs';
 import path from 'path';
+import { createToken } from '../auth/auth.utils';
+import { IJwtPayload } from '../auth/auth.interface';
 
 const verifyOtp = async (token: string, otp: string | number) => {
   if (!token) {
@@ -58,16 +60,29 @@ const verifyOtp = async (token: string, otp: string | number) => {
     { new: true },
   ).select('email _id username role');
 
-  const jwtPayload = {
-    email: updateUser?.email,
-    role: updateUser?.role,
-    userId: updateUser?._id,
+  const jwtPayload: IJwtPayload = {
+    email: updateUser?.email!,
+    role: updateUser?.role!,
+    userId: updateUser?._id.toString()!,
   };
-  const jwtToken = jwt.sign(jwtPayload, config.jwt_access_secret as Secret, {
-    expiresIn: '30d',
-  });
 
-  return { user: updateUser, token: jwtToken };
+  const accessToken = createToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string,
+  );
+
+  const refreshToken = createToken(
+    jwtPayload,
+    config.jwt_refresh_secret as string,
+    config.jwt_refresh_expires_in as string,
+  );
+
+  // const jwtToken = jwt.sign(jwtPayload, config.jwt_access_secret as Secret, {
+  //   expiresIn: '30d',
+  // });
+
+  return { user: updateUser, accessToken, refreshToken };
 };
 
 const resendOtp = async (email: string) => {
@@ -126,7 +141,7 @@ const resendOtp = async (email: string) => {
       .replace('{{email}}', user?.email),
   );
 
-  return { token };
+  return { otpToken: token };
 };
 
 export const otpServices = {

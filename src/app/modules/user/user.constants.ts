@@ -3,6 +3,9 @@ export const USER_ROLE = {
   sub_admin: 'sub_admin',
   admin: 'admin',
   user: 'user',
+  faculty: 'faculty',
+  student: 'student',
+  staff: 'staff',
 };
 
 export enum Login_With {
@@ -13,6 +16,14 @@ export enum Login_With {
 }
 
 export const gender = ['Male', 'Female', 'Others'];
-export const Role = ['admin', 'super_admin', 'sub_admin', 'user'];
+export const Role = [
+  'admin',
+  'super_admin',
+  'sub_admin',
+  'user',
+  'faculty',
+  'student',
+  'staff',
+];
 
 export const userSearchableFields = ['shopId', 'email'];

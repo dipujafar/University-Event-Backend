@@ -12,11 +12,20 @@ const upload = multer({ storage: memoryStorage() });
 
 router.post(
   '/',
-  upload.single('profile'),
-  parseData(),
+  auth(USER_ROLE.admin),
   validateRequest(userValidation?.guestValidationSchema),
   userController.createUser,
 );
+
+// --------------------- user sign up for first time entry ---------------------
+router.patch(
+  '/register',
+  upload.single('profile'),
+  parseData(),
+  validateRequest(userValidation?.userRegisterValidationSchema),
+  userController.userRegister,
+);
+// -----------------------------------------------------------------------------------
 
 router.patch(
   '/update-my-profile',
@@ -25,6 +34,8 @@ router.patch(
     USER_ROLE.sub_admin,
     USER_ROLE.super_admin,
     USER_ROLE.user,
+    USER_ROLE.faculty,
+    USER_ROLE.student,
   ),
   upload.single('profile'),
   parseData(),
@@ -62,6 +73,8 @@ router.get(
     USER_ROLE.sub_admin,
     USER_ROLE.super_admin,
     USER_ROLE.user,
+    USER_ROLE.faculty,
+    USER_ROLE.student,
   ),
   userController.getMyProfile,
 );

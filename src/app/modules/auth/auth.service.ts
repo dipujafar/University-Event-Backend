@@ -1,4 +1,3 @@
-import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
 import httpStatus from 'http-status';
 import AppError from '../../error/AppError';
 import {
@@ -9,13 +8,14 @@ import {
 } from './auth.interface';
 import config from '../../config';
 import { createToken, verifyToken } from './auth.utils';
-import { generateOtp } from '../../utils/otpGenerator';
-import moment from 'moment';
-import bcrypt from 'bcrypt';
 import { User } from '../user/user.models';
 import UAParser from 'ua-parser-js';
 import { Request } from 'express';
-import { IExitUser, IUser } from '../user/user.interface';
+import bcrypt from 'bcrypt';
+import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
+import { generateOtp } from '../../utils/otpGenerator';
+import moment from 'moment';
+import { IUser } from '../user/user.interface';
 import { sendEmail } from '../../utils/mailSender';
 import fs from 'fs';
 import path from 'path';
@@ -23,29 +23,81 @@ import path from 'path';
 // import firebaseAdmin from '../../utils/firebase';
 
 // Login
-const login = async (payload: TLogin, req: Request) => {
-  const user: IExitUser | null = await User.isUserExist(
-    payload?.phoneNumber,
-    payload?.email,
-  );
-  if (!user?.user) {
+const login = async (payload: { email: string }, req: Request) => {
+  const user = await User.isUserExist(payload.email as string);
+
+  if (!user) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'This email is not listed yet!. Please contact with admin',
+    );
+  }
+
+  if (user?.isDeleted) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'This email user removed from list. Please contact with admin',
+    );
+  }
+
+  if (!user?.fistTimeRegistered) {
+    throw new AppError(
+      httpStatus.NOT_FOUND,
+      'Please at first register your account!.',
+    );
+  }
+
+  const ip =
+    req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+    req.socket.remoteAddress ||
+    '';
+
+  const userAgent = req.headers['user-agent'] || '';
+  //@ts-ignore
+  const parser = new UAParser(userAgent);
+  const result = parser.getResult();
+  const data = {
+    device: {
+      ip: ip,
+      browser: result.browser.name,
+      os: result.os.name,
+      device: result.device.model || 'Desktop',
+      lastLogin: new Date().toISOString(),
+    },
+  };
+
+  await User.findByIdAndUpdate(user?._id, data, {
+    new: true,
+    upsert: false,
+  });
+
+  return user;
+};
+
+// --------------------------------------- login admin or staff  ----------------
+const loginAdmin = async (payload: TLogin, req: Request) => {
+  const user = await User.isUserExist(payload?.email);
+  if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  if (user?.user.isDeleted) {
+  if (user?.isDeleted) {
     throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted');
   }
 
-  if (!(await User.isPasswordMatched(payload.password, user?.user?.password))) {
+  if (!(await User.isPasswordMatched(payload.password, user?.password!))) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Password does not match');
   }
 
-  if (!user?.user?.verification?.status) {
+  if (!user?.verification?.status) {
     throw new AppError(httpStatus.FORBIDDEN, 'User account is not verified');
   }
-  const jwtPayload: { userId: string; role: string } = {
-    userId: user?.user?._id?.toString() as string,
-    role: user?.user?.role,
+  console.log(user);
+
+  const jwtPayload: { userId: string; role: string; email: string } = {
+    userId: user?._id?.toString() as string,
+    email: user?.email,
+    role: user?.role,
   };
 
   const accessToken = createToken(
@@ -79,7 +131,7 @@ const login = async (payload: TLogin, req: Request) => {
     },
   };
 
-  await User.findByIdAndUpdate(user?.user?._id, data, {
+  await User.findByIdAndUpdate(user?._id, data, {
     new: true,
     upsert: false,
   });
@@ -98,7 +150,7 @@ const changePassword = async (id: string, payload: TChangePassword) => {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
   }
 
-  if (!(await User.isPasswordMatched(payload?.oldPassword, user.password))) {
+  if (!(await User.isPasswordMatched(payload?.oldPassword, user.password!))) {
     throw new AppError(httpStatus.FORBIDDEN, 'Old password does not match');
   }
   if (payload?.newPassword !== payload?.confirmPassword) {
@@ -129,7 +181,7 @@ const changePassword = async (id: string, payload: TChangePassword) => {
 
 // Forgot password
 const forgotPassword = async (email: string) => {
-  const user = await User.isUserExistEmail(email);
+  const user = await User.isUserExist(email);
 
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
@@ -251,6 +303,7 @@ const refreshToken = async (token: string) => {
 
   const jwtPayload: IJwtPayload = {
     userId: user?._id?.toString() as string,
+    email: user?.email,
     role: user.role,
   };
 
@@ -265,197 +318,11 @@ const refreshToken = async (token: string) => {
   };
 };
 
-// const googleLogin = async (payload: any, req: Request) => {
-//   try {
-//     const decodedToken: DecodedIdToken | null = await firebaseAdmin
-//       .auth()
-//       .verifyIdToken(payload?.token);
-//     console.log(JSON.stringify(decodedToken));
-//     if (!decodedToken)
-//       throw new AppError(httpStatus.BAD_REQUEST, 'Invalid token');
-
-//     if (!decodedToken?.email_verified) {
-//       throw new AppError(
-//         httpStatus?.BAD_REQUEST,
-//         'your mail not verified from google',
-//       );
-//     }
-//     const isExist: IUser | null = await User.isUserExist(
-//       decodedToken.email as string,
-//     );
-
-//     if (isExist) {
-//       if (isExist?.status !== 'active')
-//         throw new AppError(httpStatus.FORBIDDEN, 'This account is Blocked');
-//       // Login_With.credentials ||
-//       if (isExist?.loginWth === (Login_With.facebook || Login_With.apple))
-//         throw new AppError(
-//           httpStatus.FORBIDDEN,
-//           `This account in not registered with google login. try it ${isExist?.loginWth}`,
-//         );
-
-//       if (isExist?.isDeleted)
-//         throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted');
-
-//       if (!isExist?.verification?.status) {
-//         throw new AppError(
-//           httpStatus.FORBIDDEN,
-//           'User account is not verified',
-//         );
-//       }
-
-//       const jwtPayload: { userId: string; role: string } = {
-//         userId: isExist?._id?.toString() as string,
-//         role: isExist?.role,
-//       };
-
-//       const accessToken = createToken(
-//         jwtPayload,
-//         config.jwt_access_secret as string,
-//         config.jwt_access_expires_in as string,
-//       );
-
-//       const refreshToken = createToken(
-//         jwtPayload,
-//         config.jwt_refresh_secret as string,
-//         config.jwt_refresh_expires_in as string,
-//       );
-//       if (isExist) {
-//         const ip =
-//           req.headers['x-forwarded-for']?.toString().split(',')[0] ||
-//           req.socket.remoteAddress ||
-//           '';
-
-//         const userAgent = req.headers['user-agent'] || '';
-//         //@ts-ignore
-//         const parser = new UAParser(userAgent);
-//         const result = parser.getResult();
-//         const device = {
-//           ip: ip,
-//           browser: result.browser.name,
-//           os: result.os.name,
-//           device: result.device.model || 'Desktop',
-//           lastLogin: new Date().toISOString(),
-//         };
-
-//         await User.findByIdAndUpdate(
-//           isExist?._id,
-//           { device },
-//           { new: true, upsert: false },
-//         );
-//       }
-//       return {
-//         user: isExist,
-//         accessToken,
-//         refreshToken,
-//       };
-//     }
-//     const user = await User.create({
-//       name: decodedToken?.name,
-//       email: decodedToken?.email,
-//       profile: decodedToken?.picture,
-//       expireAt: null,
-//       phoneNumber: decodedToken?.phone_number,
-//       role: payload?.role ?? USER_ROLE.user,
-//       loginWth: Login_With.google,
-//       'verification.status': true,
-//     });
-
-//     if (!user)
-//       throw new AppError(
-//         httpStatus?.BAD_REQUEST,
-//         'user account creation failed',
-//       );
-//     const jwtPayload: { userId: string; role: string } = {
-//       userId: user?._id?.toString() as string,
-//       role: user?.role,
-//     };
-
-//     const accessToken = createToken(
-//       jwtPayload,
-//       config.jwt_access_secret as string,
-//       config.jwt_access_expires_in as string,
-//     );
-
-//     const refreshToken = createToken(
-//       jwtPayload,
-//       config.jwt_refresh_secret as string,
-//       config.jwt_refresh_expires_in as string,
-//     );
-//     if (isExist) {
-//       const ip =
-//         req.headers['x-forwarded-for']?.toString().split(',')[0] ||
-//         req.socket.remoteAddress ||
-//         '';
-
-//       const userAgent = req.headers['user-agent'] || '';
-//       //@ts-ignore
-//       const parser = new UAParser(userAgent);
-//       const result = parser.getResult();
-//       const data = {
-//         device: {
-//           ip: ip,
-//           browser: result.browser.name,
-//           os: result.os.name,
-//           device: result.device.model || 'Desktop',
-//           lastLogin: new Date().toISOString(),
-//         },
-//       };
-
-//       await User.findByIdAndUpdate(user?._id, data, {
-//         new: true,
-//         upsert: false,
-//       });
-//     }
-//     return {
-//       user: user,
-//       accessToken,
-//       refreshToken,
-//     };
-//   } catch (error: any) {
-//     throw new AppError(
-//       httpStatus.BAD_REQUEST,
-//       error?.message ?? 'Login failed Server Error',
-//     );
-//   }
-// };
-
-const resetPasswordLink = async (token: string) => {
-  let decode;
-  try {
-    decode = jwt.verify(
-      token,
-      config.jwt_access_secret as string,
-    ) as JwtPayload;
-  } catch (err) {
-    throw new AppError(
-      httpStatus.UNAUTHORIZED,
-      'Session has expired. Please try again',
-    );
-  }
-
-  const user: IUser | null = await User.findById(decode?.userId);
-
-  if (!user) {
-    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
-  }
-
-  if (!user.needsPasswordChange) {
-    throw new AppError(
-      httpStatus.BAD_REQUEST,
-      'You are already reset your password',
-    );
-  }
-
-  return;
-};
-
 export const authServices = {
   login,
-  changePassword,
+  loginAdmin,
+  refreshToken,
   forgotPassword,
   resetPassword,
-  refreshToken,
-  // googleLogin,
-  resetPasswordLink,
+  changePassword,
 };

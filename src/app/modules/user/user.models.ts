@@ -1,8 +1,8 @@
-import { Error, Schema, model } from 'mongoose';
-import config from '../../config';
-import bcrypt from 'bcrypt';
+import { Schema, model } from 'mongoose';
 import { IUser, UserModel } from './user.interface';
-import { Login_With, Role, USER_ROLE } from './user.constants';
+import { Role, USER_ROLE } from './user.constants';
+import bcrypt from 'bcrypt';
+import config from '../../config';
 
 const userSchema: Schema<IUser> = new Schema(
   {
@@ -12,36 +12,23 @@ const userSchema: Schema<IUser> = new Schema(
       required: true,
       default: null,
     },
-
+    password: {
+      type: String,
+      required: false,
+      default: null,
+    },
     email: {
       type: String,
       required: true,
       trim: true,
       unique: true,
     },
-
-    password: {
-      type: String,
-      required: false,
-    },
     role: {
       type: String,
       enum: Role,
-      default: USER_ROLE.user,
+      default: USER_ROLE.student,
     },
-
-    //profile info
     profile: {
-      type: String,
-      default: null,
-    },
-
-    gender: {
-      type: String,
-      enum: ['Male', 'Female', 'Others'],
-      default: null,
-    },
-    dateOfBirth: {
       type: String,
       default: null,
     },
@@ -59,67 +46,23 @@ const userSchema: Schema<IUser> = new Schema(
       },
       default: null,
     },
-    location: {
+    status: {
+      type: String,
+      enum: ['attended', 'absent'],
+      default: 'absent',
+    },
+    section: {
       type: String,
       default: null,
     },
-
-    //extra info
-    // customerId: {
-    //   type: String,
-    //   default: null,
-    // },
-    // privacySettings: {
-    //   type: Boolean,
-    //   default: true,
-    // },
-    // bio: {
-    //   type: String,
-    //   default: null,
-    // },
-    // rank: {
-    //   type: String,
-    // },
-    // fleet: {
-    //   type: Number,
-    //   enum: [797, 777, 787, 350, 380],
-    // },
-    // agreements: {
-    //   type: String,
-    //   default: null,
-    // },
-    // referralCode: {
-    //   type: String,
-    //   default: null,
-    // },
-
-    //auth info
-    loginWth: {
+    seat: {
       type: String,
-      enum: Login_With,
-      default: Login_With.credentials,
+      default: null,
     },
-
-    status: {
-      type: String,
-      enum: ['active', 'blocked'],
-      default: 'active',
-    },
-
-    expireAt: {
-      type: Date,
-      default: () => {
-        const expireAt = new Date();
-        return expireAt.setMinutes(expireAt.getMinutes() + 20);
-      },
-    },
-    needsPasswordChange: {
+    fistTimeRegistered: {
       type: Boolean,
+      default: false,
     },
-    passwordChangedAt: {
-      type: Date,
-    },
-
     verification: {
       otp: {
         type: Schema.Types.Mixed,
@@ -160,101 +103,43 @@ const userSchema: Schema<IUser> = new Schema(
   },
 );
 
-// userSchema.index({ expireAt: 1 }, { expireAfterSeconds: 0 });
+userSchema.pre('save', async function (next) {
+  const user = this;
+  if (this?.password) {
+    user.password = await bcrypt.hash(
+      user?.password!,
+      Number(config.bcrypt_salt_rounds),
+    );
+  }
 
-// userSchema.pre('save', async function (next) {
-//   const user = this;
-//   if (this.password) {
-//     user.password = await bcrypt.hash(
-//       user.password,
-//       Number(config.bcrypt_salt_rounds),
-//     );
-//   }
+  next();
+});
 
-//   next();
-// });
-
-// set '' after saving password
-// userSchema.post(
-//   'save',
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   function (error: Error, doc: any, next: (error?: Error) => void): void {
-//     doc.verification.otp = 0;
-//     doc.password = '';
-//     next();
-//   },
-// );
-
-// userSchema.post(
-//   'findOneAndUpdate',
-//   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-//   function (error: Error, doc: any, next: (error?: Error) => void): void {
-//     doc.verification.otp = 0;
-//     doc.password = '';
-//     next();
-//   },
-// );
-
-userSchema.statics.isUserExist = async function (phoneNumber: string) {
-  return await User.findOne({ phoneNumber: phoneNumber }).select('+password');
-};
-userSchema.statics.isUserExistEmail = async function (email: string) {
-  return await User.findOne({ email: email }).select('+password');
-};
-
-userSchema.statics.isUserExist = async function (
-  phoneNumber?: string,
-  email?: string,
+userSchema.statics.isPasswordMatched = async function (
+  plainTextPassword,
+  hashedPassword,
 ) {
-  const query: any[] = [];
+  console.log({
+    plainTextPassword,
+    hashedPassword,
+  });
+  return await bcrypt.compare(plainTextPassword, hashedPassword);
+};
 
-  if (phoneNumber) {
-    query.push({ phoneNumber });
-  }
-
-  if (email) {
-    query.push({ email });
-  }
-
-  if (query.length === 0) {
-    return null; // nothing provided
-  }
-
-  const existingUser = await User.findOne({
-    $or: query,
-  }).select('+password');
-
-  if (!existingUser) {
-    return null;
-  }
-
-  return {
-    user: existingUser,
-    phoneExists: phoneNumber ? existingUser.phoneNumber === phoneNumber : false,
-    emailExists: email ? existingUser.email === email : false,
-  };
+userSchema.statics.isUserExist = async function (email: string) {
+  return await User.findOne({ email: email }).select('+password');
 };
 
 userSchema.statics.IsUserExistId = async function (id: string) {
   return await User.findById(id).select('+password');
 };
-// userSchema.statics.isPasswordMatched = async function (
-//   plainTextPassword,
-//   hashedPassword,
-// ) {
-//   return await bcrypt.compare(plainTextPassword, hashedPassword);
-// };
 
-// userSchema.post('save', function (doc, next) {
-//   doc.password = '';
-//   doc.verification.otp = 0;
-//   next();
-// });
-
-userSchema.post('findOneAndUpdate', function (doc, next) {
-  // doc.password = '';
+userSchema.post('save', function (doc) {
   doc.verification.otp = 0;
-  next();
+});
+
+userSchema.post('findOneAndUpdate', function (doc) {
+  if (doc) doc.verification.otp = 0;
 });
 
 export const User = model<IUser, UserModel>('User', userSchema);

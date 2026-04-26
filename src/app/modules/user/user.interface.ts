@@ -2,15 +2,17 @@ import { Model, Types } from 'mongoose';
 
 export interface IUser {
   _id?: Types.ObjectId;
-  status: string;
   name: string;
   email: string;
   seat: string;
   section?: string;
   phoneNumber?: string;
+  password?: string;
   profile?: string;
   role: string;
   isDeleted: boolean;
+  status: string;
+  fistTimeRegistered: boolean;
   verification: {
     otp: string | number;
     expiresAt: Date;
@@ -25,19 +27,8 @@ export interface IUser {
   };
 }
 
-export interface IExitUser {
-  user: IUser;
-  emailExists: boolean;
-  phoneExists: boolean;
-}
-
 export interface UserModel extends Model<IUser> {
-  isUserExist(phoneNumber: string): Promise<IUser>;
-  isUserExistEmail(email: string): Promise<IUser>;
-  isUserExist(
-    phoneNumber: string | undefined,
-    email: string | undefined,
-  ): Promise<IExitUser>;
+  isUserExist(email: string): Promise<IUser>;
   IsUserExistId(id: string): Promise<IUser>;
   IsUserExistUserName(userName: string): Promise<IUser>;
 
