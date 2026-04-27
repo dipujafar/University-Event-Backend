@@ -89,10 +89,84 @@ const loginAdmin = async (payload: TLogin, req: Request) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'Password does not match');
   }
 
+  if (user?.role !== 'admin') {
+    throw new AppError(httpStatus.FORBIDDEN, 'You are not valid admin');
+  }
+
   if (!user?.verification?.status) {
     throw new AppError(httpStatus.FORBIDDEN, 'User account is not verified');
   }
-  console.log(user);
+
+  const jwtPayload: { userId: string; role: string; email: string } = {
+    userId: user?._id?.toString() as string,
+    email: user?.email,
+    role: user?.role,
+  };
+
+  const accessToken = createToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_expires_in as string,
+  );
+
+  const refreshToken = createToken(
+    jwtPayload,
+    config.jwt_refresh_secret as string,
+    config.jwt_refresh_expires_in as string,
+  );
+
+  const ip =
+    req.headers['x-forwarded-for']?.toString().split(',')[0] ||
+    req.socket.remoteAddress ||
+    '';
+
+  const userAgent = req.headers['user-agent'] || '';
+  //@ts-ignore
+  const parser = new UAParser(userAgent);
+  const result = parser.getResult();
+  const data = {
+    device: {
+      ip: ip,
+      browser: result.browser.name,
+      os: result.os.name,
+      device: result.device.model || 'Desktop',
+      lastLogin: new Date().toISOString(),
+    },
+  };
+
+  await User.findByIdAndUpdate(user?._id, data, {
+    new: true,
+    upsert: false,
+  });
+
+  return {
+    user,
+    accessToken,
+    refreshToken,
+  };
+};
+// --------------------------------------- login admin or staff  ----------------
+const loginStaff = async (payload: TLogin, req: Request) => {
+  const user = await User.isUserExist(payload?.email);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  if (user?.isDeleted) {
+    throw new AppError(httpStatus.FORBIDDEN, 'This user is deleted');
+  }
+
+  if (!(await User.isPasswordMatched(payload.password, user?.password!))) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Password does not match');
+  }
+
+  if (user?.role !== 'staff') {
+    throw new AppError(httpStatus.FORBIDDEN, 'You are not valid staff');
+  }
+
+  if (!user?.verification?.status) {
+    throw new AppError(httpStatus.FORBIDDEN, 'User account is not verified');
+  }
 
   const jwtPayload: { userId: string; role: string; email: string } = {
     userId: user?._id?.toString() as string,
@@ -321,6 +395,7 @@ const refreshToken = async (token: string) => {
 export const authServices = {
   login,
   loginAdmin,
+  loginStaff,
   refreshToken,
   forgotPassword,
   resetPassword,

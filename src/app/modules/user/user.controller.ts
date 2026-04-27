@@ -56,7 +56,18 @@ const getAllUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getUserById = catchAsync(async (req: Request, res: Response) => {
-  const result = await userService.geUserById(req.params.id);
+  const result = await userService.getUserById(req.params.id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User fetched successfully',
+    data: result,
+  });
+});
+
+const qrCodeScan = catchAsync(async (req: Request, res: Response) => {
+  const { email } = req.body;
+  const result = await userService.qrCodeScan(email);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -66,7 +77,7 @@ const getUserById = catchAsync(async (req: Request, res: Response) => {
 });
 
 const getMyProfile = catchAsync(async (req: Request, res: Response) => {
-  const result = await userService.geUserById(req?.user?.userId);
+  const result = await userService.getUserById(req?.user?.userId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -142,4 +153,5 @@ export const userController = {
   deleteUser,
   deleteMYAccount,
   userRegister,
+  qrCodeScan,
 };

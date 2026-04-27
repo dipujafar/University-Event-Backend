@@ -2,8 +2,8 @@
 // import admin from 'firebase-admin';
 // import serviceAccount from '../../../firebase.json';
 
-// if (!admin.apps.length) {
-//   admin.initializeApp({
+// if (!admin{
+//   admin.initialize.apps.length) App({
 //     credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
 //   });
 // }

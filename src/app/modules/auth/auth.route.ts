@@ -15,9 +15,14 @@ router.post(
 
 router.post(
   '/login/admin',
-
   validateRequest(authValidation.loginAdminZodValidationSchema),
   authControllers.loginAdmin,
+);
+
+router.post(
+  '/login/staff',
+  validateRequest(authValidation.loginAdminZodValidationSchema),
+  authControllers.loginStaff,
 );
 
 router.post(

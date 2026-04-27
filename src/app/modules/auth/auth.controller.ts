@@ -19,9 +19,33 @@ const login = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// ---------------------------------------- login admin or staff -----------------------------------------------
+// ---------------------------------------- login admin -----------------------------------------------
 const loginAdmin = catchAsync(async (req: Request, res: Response) => {
   const result = await authServices.loginAdmin(req.body, req);
+  const { refreshToken } = result;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cookieOptions: any = {
+    secure: false,
+    httpOnly: true,
+    maxAge: 31536000000,
+  };
+
+  if (config.NODE_ENV === 'production') {
+    cookieOptions.sameSite = 'none';
+  }
+  res.cookie('refreshToken', refreshToken, cookieOptions);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Logged in successfully',
+    data: result,
+  });
+});
+
+// ---------------------------------------- login staff -----------------------------------------------
+const loginStaff = catchAsync(async (req: Request, res: Response) => {
+  const result = await authServices.loginStaff(req.body, req);
   const { refreshToken } = result;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cookieOptions: any = {
@@ -93,6 +117,7 @@ const refreshToken = catchAsync(async (req: Request, res: Response) => {
 export const authControllers = {
   login,
   loginAdmin,
+  loginStaff,
   refreshToken,
   forgotPassword,
   resetPassword,

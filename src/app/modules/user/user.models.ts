@@ -35,8 +35,7 @@ const userSchema: Schema<IUser> = new Schema(
     phoneNumber: {
       type: String,
       required: false,
-      unique: true,
-      sparse: true,
+      // sparse: true,
       trim: true,
       validate: {
         validator: function (v: string) {
@@ -62,6 +61,10 @@ const userSchema: Schema<IUser> = new Schema(
     fistTimeRegistered: {
       type: Boolean,
       default: false,
+    },
+    checkInTime: {
+      type: Date,
+      default: null,
     },
     verification: {
       otp: {
@@ -119,10 +122,6 @@ userSchema.statics.isPasswordMatched = async function (
   plainTextPassword,
   hashedPassword,
 ) {
-  console.log({
-    plainTextPassword,
-    hashedPassword,
-  });
   return await bcrypt.compare(plainTextPassword, hashedPassword);
 };
 

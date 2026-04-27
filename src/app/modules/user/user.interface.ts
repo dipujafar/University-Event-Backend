@@ -13,6 +13,7 @@ export interface IUser {
   isDeleted: boolean;
   status: string;
   fistTimeRegistered: boolean;
+  checkInTime: Date;
   verification: {
     otp: string | number;
     expiresAt: Date;

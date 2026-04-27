@@ -26,8 +26,16 @@ const userRegisterValidationSchema = z.object({
     profile: z.string().optional(),
   }),
 });
+const userQrCodeSCanValidationSchema = z.object({
+  body: z.object({
+    email: z
+      .string({ required_error: 'Email is required' })
+      .email({ message: 'Invalid email address' }),
+  }),
+});
 
 export const userValidation = {
   guestValidationSchema,
   userRegisterValidationSchema,
+  userQrCodeSCanValidationSchema,
 };

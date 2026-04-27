@@ -25,6 +25,14 @@ router.patch(
   validateRequest(userValidation?.userRegisterValidationSchema),
   userController.userRegister,
 );
+
+router.patch(
+  '/scan-qrcode',
+  // auth(USER_ROLE.staff),
+  validateRequest(userValidation?.userQrCodeSCanValidationSchema),
+  userController.qrCodeScan,
+);
+
 // -----------------------------------------------------------------------------------
 
 router.patch(

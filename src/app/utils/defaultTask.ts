@@ -21,6 +21,21 @@ export async function defaultTask() {
     });
   }
 
+  const staff = await User.findOne({ role: USER_ROLE?.staff });
+  if (!staff) {
+    await User.create({
+      name: 'Mohammad',
+      email: 'staff@gmail.com',
+      phoneNumber: '+8801321834780',
+      password: 'staff112233',
+      role: 'staff',
+      verification: {
+        otp: '0',
+        status: true,
+      },
+    });
+  }
+
   // const content = await Contents.findOne({});
   // if (!content) {
   //   await Contents.create({

@@ -69,11 +69,25 @@ const getAllUser = async (query: Record<string, any>) => {
   };
 };
 
-const geUserById = async (id: string) => {
+const getUserById = async (id: string) => {
   const result = await User.findById(id).select('-password');
   if (!result) {
     throw new AppError(httpStatus.NOT_FOUND, 'User not found');
   }
+  return result;
+};
+
+const qrCodeScan = async (email: string) => {
+  const user = await User.isUserExist(email);
+
+  if (user?.status === 'attended') {
+    throw new AppError(httpStatus.BAD_REQUEST, 'User already checked in');
+  }
+
+  const updatedData = { status: 'attended', checkInTime: new Date() };
+  const result = await User.findOneAndUpdate({ email }, updatedData, {
+    new: true,
+  });
   return result;
 };
 
@@ -103,8 +117,9 @@ const deleteUser = async (id: string) => {
 export const userService = {
   createUser,
   getAllUser,
-  geUserById,
+  getUserById,
   updateUser,
   deleteUser,
   registerUser,
+  qrCodeScan,
 };
