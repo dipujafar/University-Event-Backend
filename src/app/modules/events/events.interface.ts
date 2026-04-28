@@ -21,4 +21,8 @@ export interface IEvents {
   isDeleted: boolean;
 }
 
-export type IEventsModules = Model<IEvents, Record<string, unknown>>;
+
+
+export interface EventsModel extends Model<IEvents> {
+  IsEventsExist(): Promise<IEvents[]>;
+}

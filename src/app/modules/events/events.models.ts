@@ -1,10 +1,5 @@
 import { model, Schema } from 'mongoose';
-import {
-  IEvents,
-  IEventsModules,
-  IIncluded,
-  ILocation,
-} from './events.interface';
+import { IEvents, EventsModel, IIncluded, ILocation } from './events.interface';
 
 const locationSchema = new Schema<ILocation>({
   venue: { type: 'string', required: [true, 'Event venue is required'] },
@@ -38,22 +33,26 @@ const eventsSchema = new Schema<IEvents>(
   },
 );
 
-//eventsSchema.pre('find', function (next) {
-//  //@ts-ignore
-//  this.find({ isDeleted: { $ne: true } });
-//  next();
-//});
+eventsSchema.pre('find', function (next) {
+  //@ts-ignore
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
 
-//eventsSchema.pre('findOne', function (next) {
-//@ts-ignore
-//this.find({ isDeleted: { $ne: true } });
-// next();
-//});
+eventsSchema.pre('findOne', function (next) {
+  // @ts-ignore
+  this.find({ isDeleted: { $ne: true } });
+  next();
+});
+
+eventsSchema.statics.IsEventsExist = async function () {
+  return await Events.find();
+};
 
 eventsSchema.pre('aggregate', function (next) {
   this.pipeline().unshift({ $match: { isDeleted: { $ne: true } } });
   next();
 });
 
-const Events = model<IEvents, IEventsModules>('Events', eventsSchema);
+const Events = model<IEvents, EventsModel>('Events', eventsSchema);
 export default Events;

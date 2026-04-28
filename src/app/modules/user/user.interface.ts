@@ -32,6 +32,7 @@ export interface UserModel extends Model<IUser> {
   isUserExist(email: string): Promise<IUser>;
   IsUserExistId(id: string): Promise<IUser>;
   IsUserExistUserName(userName: string): Promise<IUser>;
+  isUserSeatBooked(seat: string): Promise<IUser>;
 
   isPasswordMatched(
     plainTextPassword: string,

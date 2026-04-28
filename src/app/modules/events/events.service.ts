@@ -5,6 +5,13 @@ import AppError from '../../error/AppError';
 import QueryBuilder from '../../class/builder/QueryBuilder';
 
 const createEvents = async (payload: IEvents) => {
+  const event = await Events.IsEventsExist();
+  if (event?.length) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'Event already exists and only one event can be created',
+    );
+  }
   const result = await Events.create(payload);
   if (!result) {
     throw new AppError(httpStatus.BAD_REQUEST, 'Failed to create events');

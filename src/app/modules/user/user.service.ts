@@ -13,12 +13,17 @@ export type IFilter = {
 };
 const createUser = async (payload: IUser): Promise<IUser> => {
   const isExist = await User.isUserExist(payload.email as string);
+  const isSeatBooked = await User.isUserSeatBooked(payload.seat as string);
 
   if (isExist) {
     throw new AppError(
       httpStatus.FORBIDDEN,
       'User already exists with this email',
     );
+  }
+
+  if (isSeatBooked) {
+    throw new AppError(httpStatus.FORBIDDEN, 'This seat is already booked');
   }
 
   const user = await User.create(payload);
@@ -43,6 +48,18 @@ const registerUser = async (email: string, payload: Partial<IUser>) => {
     throw new AppError(
       httpStatus.NOT_FOUND,
       'This email user removed from list. Please contact with admin',
+    );
+  }
+
+  if (isExist.role === 'admin') {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'This email is registered as admin. Please use for admin login',
+    );
+  } else if (isExist.role === 'staff') {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'This email is registered as staff. Please use for staff login',
     );
   }
 

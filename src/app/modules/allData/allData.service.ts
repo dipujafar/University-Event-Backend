@@ -1,11 +1,11 @@
 import Events from '../events/events.models';
 import { User } from '../user/user.models';
-import { Notification } from '../notification/notification.model';
+import Announcements from '../announcements/announcements.models';
 
 const getAllAllData = async (userId: string) => {
   const event = await Events.find();
   const user = await User.findById(userId).select('-password');
-  const announcements = await Notification.find();
+  const announcements = await Announcements.find();
 
   return {
     event: event?.[0],

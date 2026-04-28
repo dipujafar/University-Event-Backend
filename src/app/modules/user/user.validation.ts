@@ -22,7 +22,7 @@ const userRegisterValidationSchema = z.object({
       .string({ required_error: 'Email is required' })
       .email({ message: 'Invalid email address' }),
     phoneNumber: z.string({ required_error: 'Phone number is required' }),
-    section: z.string({ required_error: 'Section is required' }),
+    section: z.string().optional(),
     profile: z.string().optional(),
   }),
 });

@@ -5,6 +5,7 @@ import { authRoutes } from '../modules/auth/auth.route';
 import { notificationRoutes } from '../modules/notification/notificaiton.route';
 import { eventsRoutes } from '../modules/events/events.route';
 import { allDataRoutes } from '../modules/allData/allData.route';
+import { announcementsRoutes } from '../modules/announcements/announcements.route';
 
 const router = Router();
 const moduleRoutes = [
@@ -31,6 +32,10 @@ const moduleRoutes = [
   {
     path: '/all-data',
     route: allDataRoutes,
+  },
+  {
+    path: '/announcements',
+    route: announcementsRoutes,
   },
 ];
 moduleRoutes.forEach(route => router.use(route.path, route.route));

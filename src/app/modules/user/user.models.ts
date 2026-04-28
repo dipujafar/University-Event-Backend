@@ -57,6 +57,7 @@ const userSchema: Schema<IUser> = new Schema(
     seat: {
       type: String,
       default: null,
+      unique: true,
     },
     fistTimeRegistered: {
       type: Boolean,
@@ -127,6 +128,9 @@ userSchema.statics.isPasswordMatched = async function (
 
 userSchema.statics.isUserExist = async function (email: string) {
   return await User.findOne({ email: email }).select('+password');
+};
+userSchema.statics.isUserSeatBooked = async function (seat: string) {
+  return await User.findOne({ seat: seat }).select('+password');
 };
 
 userSchema.statics.IsUserExistId = async function (id: string) {

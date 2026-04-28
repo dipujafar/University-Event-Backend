@@ -40,6 +40,18 @@ const login = async (payload: { email: string }, req: Request) => {
     );
   }
 
+  if (user?.role === 'admin') {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'This email is reserved for admin. Please use admin login',
+    );
+  } else if (user?.role === 'staff') {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'This email is reserved for staff. Please use staff login',
+    );
+  }
+
   if (!user?.fistTimeRegistered) {
     throw new AppError(
       httpStatus.NOT_FOUND,
@@ -74,7 +86,7 @@ const login = async (payload: { email: string }, req: Request) => {
   return user;
 };
 
-// --------------------------------------- login admin or staff  ----------------
+// --------------------------------------- login admin  ----------------
 const loginAdmin = async (payload: TLogin, req: Request) => {
   const user = await User.isUserExist(payload?.email);
   if (!user) {
@@ -164,6 +176,7 @@ const loginStaff = async (payload: TLogin, req: Request) => {
     throw new AppError(httpStatus.FORBIDDEN, 'You are not valid staff');
   }
 
+  console.log(user?.verification);
   if (!user?.verification?.status) {
     throw new AppError(httpStatus.FORBIDDEN, 'User account is not verified');
   }
