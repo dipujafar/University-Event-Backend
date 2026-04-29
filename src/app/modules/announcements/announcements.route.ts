@@ -24,7 +24,27 @@ router.delete(
   auth(USER_ROLE.admin),
   announcementsController.deleteAnnouncements,
 );
-router.get('/:id', announcementsController.getAnnouncementsById);
-router.get('/', announcementsController.getAllAnnouncements);
+router.get(
+  '/:id',
+  auth(
+    USER_ROLE.admin,
+    USER_ROLE.user,
+    USER_ROLE.staff,
+    USER_ROLE.student,
+    USER_ROLE.faculty,
+  ),
+  announcementsController.getAnnouncementsById,
+);
+router.get(
+  '/',
+  auth(
+    USER_ROLE.admin,
+    USER_ROLE.user,
+    USER_ROLE.staff,
+    USER_ROLE.student,
+    USER_ROLE.faculty,
+  ),
+  announcementsController.getAllAnnouncements,
+);
 
 export const announcementsRoutes = router;

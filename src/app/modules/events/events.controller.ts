@@ -2,8 +2,6 @@ import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import { eventsService } from './events.service';
 import sendResponse from '../../utils/sendResponse';
-import { storeFile } from '../../utils/fileHelper';
-import { uploadToS3 } from '../../utils/s3';
 
 const createEvents = catchAsync(async (req: Request, res: Response) => {
   const result = await eventsService.createEvents(req.body);
@@ -20,7 +18,7 @@ const getAllEvents = catchAsync(async (req: Request, res: Response) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: 'All events fetched successfully',
+    message: 'Events fetched successfully',
     data: result?.data?.[0],
   });
 });

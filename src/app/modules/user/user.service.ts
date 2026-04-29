@@ -63,6 +63,13 @@ const registerUser = async (email: string, payload: Partial<IUser>) => {
     );
   }
 
+  if (isExist.fistTimeRegistered) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'This email is already registered. Please sign in with this email',
+    );
+  }
+
   const user = await User.findOneAndUpdate({ email }, payload, { new: true });
   if (!user) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User registration failed');
@@ -73,7 +80,7 @@ const registerUser = async (email: string, payload: Partial<IUser>) => {
 
 const getAllUser = async (query: Record<string, any>) => {
   const userModel = new QueryBuilder(User.find().select('-password'), query)
-    .search(['name', 'email', 'phoneNumber', 'status'])
+    .search(['name', 'email', 'phoneNumber', 'seat', 'section', 'role'])
     .filter()
     .paginate()
     .sort()

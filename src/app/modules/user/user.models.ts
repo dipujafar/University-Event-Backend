@@ -126,6 +126,20 @@ userSchema.statics.isPasswordMatched = async function (
   return await bcrypt.compare(plainTextPassword, hashedPassword);
 };
 
+userSchema.pre('find', function (next) {
+  this.where({ isDeleted: false });
+  next();
+});
+
+userSchema.pre('aggregate', function (next) {
+  this.pipeline().unshift({ $match: { isDeleted: false } });
+  next();
+});
+
+userSchema.pre('find', function (next) {
+  this.where({ role: { $nin: ['admin', 'staff'] } });
+  next();
+});
 userSchema.statics.isUserExist = async function (email: string) {
   return await User.findOne({ email: email }).select('+password');
 };

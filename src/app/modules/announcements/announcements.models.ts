@@ -20,13 +20,12 @@ const announcementsSchema = new Schema<IAnnouncements>(
 
 announcementsSchema.pre('find', function (next) {
   //@ts-ignore
-  this.find({ isDeleted: { $ne: true } });
+  this.where({ isDeleted: { $ne: true } });
   next();
 });
 
 announcementsSchema.pre('findOne', function (next) {
-  //@ts-ignore
-  this.find({ isDeleted: { $ne: true } });
+  this.where({ isDeleted: { $ne: true } });
   next();
 });
 

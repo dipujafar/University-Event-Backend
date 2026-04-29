@@ -240,6 +240,14 @@ const changePassword = async (id: string, payload: TChangePassword) => {
   if (!(await User.isPasswordMatched(payload?.oldPassword, user.password!))) {
     throw new AppError(httpStatus.FORBIDDEN, 'Old password does not match');
   }
+
+  if (payload?.oldPassword === payload?.newPassword) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      'Old password and new password can not be same',
+    );
+  }
+
   if (payload?.newPassword !== payload?.confirmPassword) {
     throw new AppError(
       httpStatus.BAD_REQUEST,

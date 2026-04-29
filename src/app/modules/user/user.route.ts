@@ -28,7 +28,7 @@ router.patch(
 
 router.patch(
   '/scan-qrcode',
-  // auth(USER_ROLE.staff),
+  auth(USER_ROLE.staff, USER_ROLE.admin),
   validateRequest(userValidation?.userQrCodeSCanValidationSchema),
   userController.qrCodeScan,
 );
