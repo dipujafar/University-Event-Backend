@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync';
 import { eventsService } from './events.service';
 import sendResponse from '../../utils/sendResponse';
+import AppError from '../../error/AppError';
+import httpStatus from 'http-status';
+import { uploadToS3 } from '../../utils/s3';
 
 const createEvents = catchAsync(async (req: Request, res: Response) => {
   const result = await eventsService.createEvents(req.body);
@@ -10,6 +13,24 @@ const createEvents = catchAsync(async (req: Request, res: Response) => {
     success: true,
     message: 'Events created successfully',
     data: result,
+  });
+});
+
+const uploadImage = catchAsync(async (req: Request, res: Response) => {
+  if (!req.file) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'image file is required');
+  }
+
+  const image = await uploadToS3({
+    file: req.file,
+    fileName: `images/event/icon/${Math.floor(100000 + Math.random() * 900000)}`,
+  });
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Image uploaded successfully',
+    data: image,
   });
 });
 
@@ -58,4 +79,5 @@ export const eventsController = {
   getEventsById,
   updateEvents,
   deleteEvents,
+  uploadImage,
 };

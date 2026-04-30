@@ -34,7 +34,6 @@ const userSchema: Schema<IUser> = new Schema(
     },
     phoneNumber: {
       type: String,
-      required: false,
       // sparse: true,
       trim: true,
       validate: {
@@ -43,7 +42,6 @@ const userSchema: Schema<IUser> = new Schema(
         },
         message: (props: any) => `${props.value} is not a valid phone number!`,
       },
-      default: null,
     },
     status: {
       type: String,

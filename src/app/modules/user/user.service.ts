@@ -101,6 +101,21 @@ const getUserById = async (id: string) => {
   return result;
 };
 
+const getAttendanceStats = async () => {
+  const result = await User.aggregate([
+    { $match: { role: { $nin: ['admin', 'staff'] } } },
+    {
+      $group: {
+        _id: null,
+        totalUsers: { $sum: 1 },
+        checkedIn: {
+          
+        },
+      },
+    },
+  ]);
+};
+
 const qrCodeScan = async (email: string) => {
   const user = await User.isUserExist(email);
 
