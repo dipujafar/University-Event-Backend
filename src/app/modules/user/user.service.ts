@@ -70,7 +70,10 @@ const registerUser = async (email: string, payload: Partial<IUser>) => {
     );
   }
 
-  const user = await User.findOneAndUpdate({ email }, payload, { new: true });
+  const updatedData = { ...payload, registeredAt: new Date() };
+  const user = await User.findOneAndUpdate({ email }, updatedData, {
+    new: true,
+  });
   if (!user) {
     throw new AppError(httpStatus.BAD_REQUEST, 'User registration failed');
   }
@@ -109,11 +112,43 @@ const getAttendanceStats = async () => {
         _id: null,
         totalUsers: { $sum: 1 },
         checkedIn: {
-          
+          $sum: {
+            $cond: [{ $eq: ['$status', 'attended'] }, 1, 0],
+          },
+        },
+        notArrived: {
+          $sum: {
+            $cond: [{ $eq: ['$status', 'absent'] }, 1, 0],
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        totalUsers: 1,
+        checkedIn: 1,
+        notArrived: 1,
+        attendanceRate: {
+          $round: [
+            {
+              $multiply: [{ $divide: ['$checkedIn', '$totalUsers'] }, 100],
+            },
+            2,
+          ],
         },
       },
     },
   ]);
+
+  return (
+    result[0] ?? {
+      totalUsers: 0,
+      checkedIn: 0,
+      notArrived: 0,
+      attendanceRate: 0,
+    }
+  );
 };
 
 const qrCodeScan = async (email: string) => {
@@ -161,4 +196,5 @@ export const userService = {
   deleteUser,
   registerUser,
   qrCodeScan,
+  getAttendanceStats,
 };

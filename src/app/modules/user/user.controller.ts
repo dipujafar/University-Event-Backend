@@ -65,6 +65,18 @@ const getUserById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getUserAttendanceStats = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await userService.getAttendanceStats();
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: 'User stats fetched successfully',
+      data: result,
+    });
+  },
+);
+
 const qrCodeScan = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.body;
   const result = await userService.qrCodeScan(email);
@@ -154,4 +166,5 @@ export const userController = {
   deleteMYAccount,
   userRegister,
   qrCodeScan,
+  getUserAttendanceStats,
 };

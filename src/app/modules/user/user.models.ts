@@ -61,6 +61,10 @@ const userSchema: Schema<IUser> = new Schema(
       type: Boolean,
       default: false,
     },
+    registeredAt: {
+      type: Date,
+      default: null,
+    },
     checkInTime: {
       type: Date,
       default: null,

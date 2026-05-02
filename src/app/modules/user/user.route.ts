@@ -87,7 +87,7 @@ router.get(
   userController.getMyProfile,
 );
 
-// router.get('');
+router.get('/attendance-stats', userController.getUserAttendanceStats);
 
 router.get('/:id', userController.getUserById);
 

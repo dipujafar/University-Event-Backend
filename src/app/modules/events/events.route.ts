@@ -34,7 +34,8 @@ router.patch(
   eventsController.updateEvents,
 );
 router.delete('/:id', auth(USER_ROLE.admin), eventsController.deleteEvents);
-router.get('/:id', eventsController.getEventsById);
+router.get('/check-in-chart', eventsController.getCheckInChartOverview);
 router.get('/', eventsController.getAllEvents);
+router.get('/:id', eventsController.getEventsById);
 
 export const eventsRoutes = router;

@@ -53,6 +53,22 @@ const getEventsById = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+
+// ------------------------------------- get check-in overview chart for admin dashboard -----------------------------------
+const getCheckInChartOverview = catchAsync(
+  async (req: Request, res: Response) => {
+    const result = await eventsService.getCheckInChartOverview(
+      parseInt(req?.query?.intervalMinutes as string) || 60,
+    );
+    sendResponse(res, {
+      statusCode: 200,
+      success: true,
+      message: 'Check-in chart overview fetched successfully',
+      data: result,
+    });
+  },
+);
+
 const updateEvents = catchAsync(async (req: Request, res: Response) => {
   const result = await eventsService.updateEvents(req.params.id, req.body);
   sendResponse(res, {
@@ -80,4 +96,5 @@ export const eventsController = {
   updateEvents,
   deleteEvents,
   uploadImage,
+  getCheckInChartOverview,
 };
