@@ -15,6 +15,7 @@ export interface IUser {
   fistTimeRegistered: boolean;
   registeredAt: Date | null;
   checkInTime: Date | null;
+  fcmToken?: string;
   verification: {
     otp: string | number;
     expiresAt: Date;

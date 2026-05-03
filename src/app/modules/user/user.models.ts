@@ -69,6 +69,10 @@ const userSchema: Schema<IUser> = new Schema(
       type: Date,
       default: null,
     },
+    fcmToken: {
+      type: String,
+      default: null,
+    },
     verification: {
       otp: {
         type: Schema.Types.Mixed,

@@ -3,8 +3,22 @@ import { IAnnouncements } from './announcements.interface';
 import Announcements from './announcements.models';
 import AppError from '../../error/AppError';
 import QueryBuilder from '../../class/builder/QueryBuilder';
+import { getAllFcmTokens, sendNotification } from './announcements.utils';
 
 const createAnnouncements = async (payload: IAnnouncements) => {
+  const fcmTokens = await getAllFcmTokens();
+
+  if (fcmTokens.length) {
+    const sendAnnouncement = await sendNotification(fcmTokens, payload);
+
+    if (!sendAnnouncement.successCount) {
+      throw new AppError(
+        httpStatus.BAD_REQUEST,
+        'Failed to send announcements',
+      );
+    }
+  }
+
   const result = await Announcements.create(payload);
   if (!result) {
     throw new AppError(
@@ -12,7 +26,7 @@ const createAnnouncements = async (payload: IAnnouncements) => {
       'Failed to create announcements',
     );
   }
-  
+
   return result;
 };
 
