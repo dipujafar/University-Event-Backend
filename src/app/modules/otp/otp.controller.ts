@@ -7,7 +7,11 @@ import { Request, Response } from 'express';
 const verifyOtp = catchAsync(async (req: Request, res: Response) => {
   const token = req?.headers?.token;
 
-  const result = await otpServices.verifyOtp(token as string, req.body.otp);
+  const result = await otpServices.verifyOtp(
+    token as string,
+    req.body.otp,
+    req.body.FCMToken,
+  );
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

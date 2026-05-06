@@ -5,7 +5,7 @@ import Announcements from '../announcements/announcements.models';
 const getAllAllData = async (userId: string) => {
   const event = await Events.find();
   const user = await User.findById(userId).select('-password');
-  const announcements = await Announcements.find();
+  const announcements = await Announcements.find().sort({ createdAt: -1 });
 
   return {
     event: event?.[0],

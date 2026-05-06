@@ -6,6 +6,7 @@ const verifyOtpZodSchema = z.object({
       .string({ required_error: 'otp is required' })
       .length(6, { message: 'otp must be exactly 6 characters long' }),
   }),
+  FCMToken: z.string().optional(),
 });
 
 const resentOtpZodSchema = z.object({

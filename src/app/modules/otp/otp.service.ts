@@ -12,10 +12,15 @@ import path from 'path';
 import { createToken } from '../auth/auth.utils';
 import { IJwtPayload } from '../auth/auth.interface';
 
-const verifyOtp = async (token: string, otp: string | number) => {
+const verifyOtp = async (
+  token: string,
+  otp: string | number,
+  FCMToken: string | undefined,
+) => {
   if (!token) {
     throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
   }
+
   let decode;
   try {
     decode = jwt.verify(
@@ -23,7 +28,6 @@ const verifyOtp = async (token: string, otp: string | number) => {
       config.jwt_access_secret as Secret,
     ) as JwtPayload;
   } catch (err) {
-    console.error(err);
     throw new AppError(
       httpStatus.FORBIDDEN,
       'Session has expired. Please try to submit OTP within 3 minute',
@@ -46,17 +50,21 @@ const verifyOtp = async (token: string, otp: string | number) => {
     throw new AppError(httpStatus.BAD_REQUEST, 'OTP did not match');
   }
 
+  const updateData: any = {
+    verification: {
+      otp: 0,
+      expiresAt: moment().add(3, 'minute'),
+      status: true,
+    },
+  };
+
+  if (FCMToken) {
+    updateData.fcmToken = FCMToken;
+  }
+
   const updateUser = await User.findByIdAndUpdate(
     user?._id,
-    {
-      $set: {
-        verification: {
-          otp: 0,
-          expiresAt: moment().add(3, 'minute'),
-          status: true,
-        },
-      },
-    },
+    { $set: updateData },
     { new: true },
   ).select('email _id username role');
 
