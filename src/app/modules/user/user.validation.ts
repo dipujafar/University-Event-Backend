@@ -14,6 +14,15 @@ const guestValidationSchema = z.object({
     profile: z.string().optional(),
   }),
 });
+const createAddStaffValidationSchema = z.object({
+  body: z.object({
+    name: z.string({ required_error: 'name is required' }),
+    email: z
+      .string({ required_error: 'Email is required' })
+      .email({ message: 'Invalid email address' }),
+    phoneNumber: z.string().optional(),
+  }),
+});
 
 const userRegisterValidationSchema = z.object({
   body: z.object({
@@ -36,6 +45,7 @@ const userQrCodeSCanValidationSchema = z.object({
 
 export const userValidation = {
   guestValidationSchema,
+  createAddStaffValidationSchema,
   userRegisterValidationSchema,
   userQrCodeSCanValidationSchema,
 };

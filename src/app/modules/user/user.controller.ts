@@ -22,6 +22,21 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+const createStaff = catchAsync(async (req: Request, res: Response) => {
+  if (req.file) {
+    req.body.profile = await uploadToS3({
+      file: req.file,
+      fileName: `images/user/profile/${Math.floor(100000 + Math.random() * 900000)}`,
+    });
+  }
+  const result = await userService.createStaff(req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User created successfully',
+    data: result,
+  });
+});
 
 //  -------------------------------- user registration for first time entry ---------------------
 const userRegister = catchAsync(async (req: Request, res: Response) => {
@@ -47,6 +62,16 @@ const userRegister = catchAsync(async (req: Request, res: Response) => {
 
 const getAllUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.getAllUser(req.query);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Users fetched successfully',
+    data: result,
+  });
+});
+
+const getAllStaff = catchAsync(async (req: Request, res: Response) => {
+  const result = await userService.getAllStaff(req.query);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -157,7 +182,9 @@ const deleteMYAccount = catchAsync(async (req: Request, res: Response) => {
 
 export const userController = {
   createUser,
+  createStaff,
   getAllUser,
+  getAllStaff,
   getUserById,
   getMyProfile,
   updateUser,

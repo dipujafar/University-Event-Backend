@@ -33,6 +33,25 @@ const createUser = async (payload: IUser): Promise<IUser> => {
   return user;
 };
 
+// create staff role
+const createStaff = async (payload: IUser): Promise<IUser> => {
+  const isExist = await User.isUserExist(payload.email as string);
+
+  if (isExist) {
+    throw new AppError(
+      httpStatus.FORBIDDEN,
+      'User already exists with this email',
+    );
+  }
+  payload.role = 'staff';
+
+  const user = await User.create(payload);
+  if (!user) {
+    throw new AppError(httpStatus.BAD_REQUEST, 'Staff creation failed');
+  }
+  return user;
+};
+
 // ----------------------------------- user registration for first time entry ---------------------
 const registerUser = async (email: string, payload: Partial<IUser>) => {
   const isExist = await User.isUserExist(payload.email as string);
@@ -82,7 +101,28 @@ const registerUser = async (email: string, payload: Partial<IUser>) => {
 // -----------------------------------------------------------------------------------------------
 
 const getAllUser = async (query: Record<string, any>) => {
-  const userModel = new QueryBuilder(User.find().select('-password'), query)
+  const userModel = new QueryBuilder(
+    User.find({ role: { $nin: ['admin', 'staff'] } }).select('-password'),
+    query,
+  )
+    .search(['name', 'email', 'phoneNumber', 'seat', 'section', 'role'])
+    .filter()
+    .paginate()
+    .sort()
+    .fields();
+  const data: any = await userModel.modelQuery;
+  const meta = await userModel.countTotal();
+  return {
+    data,
+    meta,
+  };
+};
+const getAllStaff = async (query: Record<string, any>) => {
+  // query.role = 'staff';
+  const userModel = new QueryBuilder(
+    User.find({ role: 'staff' }).select('-password'),
+    query,
+  )
     .search(['name', 'email', 'phoneNumber', 'seat', 'section', 'role'])
     .filter()
     .paginate()
@@ -190,7 +230,9 @@ const deleteUser = async (id: string) => {
 
 export const userService = {
   createUser,
+  createStaff,
   getAllUser,
+  getAllStaff,
   getUserById,
   updateUser,
   deleteUser,

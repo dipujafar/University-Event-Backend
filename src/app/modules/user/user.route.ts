@@ -16,6 +16,12 @@ router.post(
   validateRequest(userValidation?.guestValidationSchema),
   userController.createUser,
 );
+router.post(
+  '/create-staff',
+  auth(USER_ROLE.admin),
+  validateRequest(userValidation?.createAddStaffValidationSchema),
+  userController.createStaff,
+);
 
 // --------------------- user sign up for first time entry ---------------------
 router.patch(
@@ -92,5 +98,6 @@ router.get('/attendance-stats', userController.getUserAttendanceStats);
 router.get('/:id', userController.getUserById);
 
 router.get('/', auth(USER_ROLE.admin), userController.getAllUser);
+router.get('/users/staff', auth(USER_ROLE.admin), userController.getAllStaff);
 
 export const userRoutes = router;

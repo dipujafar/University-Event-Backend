@@ -142,10 +142,6 @@ userSchema.pre('aggregate', function (next) {
   next();
 });
 
-userSchema.pre('find', function (next) {
-  this.where({ role: { $nin: ['admin', 'staff'] } });
-  next();
-});
 userSchema.statics.isUserExist = async function (email: string) {
   return await User.findOne({ email: email }).select('+password');
 };
