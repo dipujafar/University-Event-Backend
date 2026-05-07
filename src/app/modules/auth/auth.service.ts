@@ -176,7 +176,6 @@ const loginStaff = async (payload: TLogin, req: Request) => {
     throw new AppError(httpStatus.FORBIDDEN, 'You are not valid staff');
   }
 
-  console.log(user?.verification);
   if (!user?.verification?.status) {
     throw new AppError(httpStatus.FORBIDDEN, 'User account is not verified');
   }

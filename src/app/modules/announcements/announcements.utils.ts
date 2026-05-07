@@ -38,8 +38,6 @@ export const sendNotification = async (
       },
     });
 
-    console.log(response?.responses, 'from send notification');
-
     // if (response.successCount) {
     //   fcmToken?.map(async token => {
     //     try {

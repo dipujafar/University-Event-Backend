@@ -11,7 +11,6 @@ const createAnnouncements = async (payload: IAnnouncements) => {
   if (fcmTokens.length) {
     const sendAnnouncement = await sendNotification(fcmTokens, payload);
 
-    console.log('sendAnnouncement', sendAnnouncement);
     if (!sendAnnouncement.successCount) {
       throw new AppError(
         httpStatus.BAD_REQUEST,
