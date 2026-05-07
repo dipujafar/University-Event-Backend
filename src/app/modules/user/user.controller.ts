@@ -102,6 +102,7 @@ const getUserAttendanceStats = catchAsync(
   },
 );
 
+
 const qrCodeScan = catchAsync(async (req: Request, res: Response) => {
   const { email } = req.body;
   const result = await userService.qrCodeScan(email);
